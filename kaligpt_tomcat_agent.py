@@ -11,9 +11,7 @@ Usage: python3 kaligpt_tomcat_agent.py <target> [port]
 import sys, os, json, re, time, subprocess, signal, threading
 from datetime import datetime
 from urllib.parse import urlparse
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from agents.openrouter import initialize_agent, ask
+import requests
 
 TARGET = ""
 PORT = "8080"
@@ -59,16 +57,30 @@ def run(cmd, timeout=30, shell=True):
     except Exception as e:
         return f"[ERROR] {e}"
 
-def ask_ai(prompt, system=None):
+def call_openrouter(prompt, system=None):
+    config_path = os.path.join(BASE_DIR, "agents", "utils", "api.config.json")
     try:
-        initialize_agent()
-        if not system:
-            system = "You are a Tomcat exploitation expert. Analyze and respond concisely in Arabic."
-        ch = [{"role": "system", "content": system}]
-        resp, _ = ask(prompt, ch, tools=None)
-        return resp
+        with open(config_path) as f:
+            cfg = json.load(f)
+        api_key = cfg.get("openrouter", {}).get("api_key") or cfg.get("api_key", "")
+        model = cfg.get("openrouter", {}).get("default_model") or cfg.get("default_model", "poolside/laguna-xs-2.1:free")
     except:
-        return "[AI Error]"
+        api_key = os.environ.get("OPENROUTER_API_KEY", "")
+        model = "poolside/laguna-xs-2.1:free"
+    if not api_key:
+        return "[AI Disabled: No API key]"
+    if not system:
+        system = "You are a Tomcat exploitation expert. Analyze and respond concisely in Arabic."
+    try:
+        r = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={"model": model, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]},
+            timeout=30
+        )
+        return r.json()["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"[AI Error: {e}]"
 
 # ============ PHASE 1: RECON ============
 def phase1_recon():
@@ -332,7 +344,7 @@ Write a complete report in Arabic containing:
 8. **الأدوات المستخدمة**: nmap, msfconsole, curl, إلخ
 """
 
-    report = ask_ai(prompt)
+    report = call_openrouter(prompt)
 
     report_file = os.path.join(OUTPUT_DIR, "tomcat_final_report.md")
     with open(report_file, "w") as f:
