@@ -194,11 +194,11 @@ def main(prompt=None):
     initialize_configs()   # initialize configs for Ollama
 
     # Print tool banner
-    print(f"㉿ HackerX ( ollama/{OLLAMA_MODEL} )")
+    print(f"> HackerX ( ollama/{OLLAMA_MODEL} )")
     while True:
         try:
             if prompt is None:
-                prompt = str(input("\nYou ➤ "))
+                prompt = str(input("\nYou > "))
 
             if prompt.lower().replace("-", " ").strip() in AI_MANAGEMENT_OPTIONS:
                 agent_management(prompt.lower().replace("-", " ").strip())

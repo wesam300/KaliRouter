@@ -119,11 +119,11 @@ def main(prompt=None):
     initialize_configs()   # initialize configs for OpenAI ChatGPT
 
     # Print tool banner
-    print(f"㉿ HackerX ( openai/{OPENAI_MODEL} )")
+    print(f"> HackerX ( openai/{OPENAI_MODEL} )")
     while True:
         try:
             if prompt is None:
-                prompt = input("\nYou ➤ ")
+                prompt = input("\nYou > ")
 
 
             if prompt.lower().replace("-", " ").strip() in AI_MANAGEMENT_OPTIONS:

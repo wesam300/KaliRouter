@@ -137,7 +137,7 @@ def set_default_model():
     if selected == "Other (Add new)":
 
         custom_model = input(
-            f"{Colors.CYAN}Enter Model Name ➤ {Colors.RESET}"
+            f"{Colors.CYAN}Enter Model Name > {Colors.RESET}"
         ).strip()
 
         if not custom_model:

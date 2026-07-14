@@ -171,12 +171,12 @@ def main(prompt=None):
   # Initialize chat history with system prompt
   chat_history: list = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-  print(f"㉿ HackerX ( openrouter/{OPENROUTER_MODEL} )")
+  print(f"> HackerX ( openrouter/{OPENROUTER_MODEL} )")
 
   while True:
     try:
       if prompt is None:
-        prompt = input("\nYou ➤ ")
+        prompt = input("\nYou > ")
 
       if prompt.lower().replace("-", " ").strip() in AI_MANAGEMENT_OPTIONS:
         agent_management(prompt.lower().replace("-", " ").strip())

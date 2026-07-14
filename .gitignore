@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+agents/__pycache__/
+agents/utils/__pycache__/
+agents/utils/tools/__pycache__/
+agents/utils/api.config.json
+api.config.json
+pentest_output/
+*.war
+shell/
+critical_results.json
+final_results.json
+phase1_results.json
+phases2_6_results.json

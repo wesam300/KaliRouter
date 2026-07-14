@@ -158,11 +158,11 @@ def main(prompt=None):
 
     initialize_configs()   # initialize configs for gemini
 
-    print(f"㉿ HackerX ( Gemini/{GEMINI_MODEL} )")
+    print(f"> HackerX ( Gemini/{GEMINI_MODEL} )")
     while True:
         try:
             if prompt is None:
-                prompt = input("\nYou ➤ ")
+                prompt = input("\nYou > ")
 
 
             if prompt.lower().replace("-", " ").strip() in AI_MANAGEMENT_OPTIONS:
