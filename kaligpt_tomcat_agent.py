@@ -13,6 +13,9 @@ from datetime import datetime
 from urllib.parse import urlparse
 import requests
 
+USE_AI = True
+DEBUG_AI = False
+
 TARGET = ""
 PORT = "8080"
 DOMAIN = ""
@@ -58,6 +61,9 @@ def run(cmd, timeout=30, shell=True):
         return f"[ERROR] {e}"
 
 def call_openrouter(prompt, system=None):
+    global USE_AI, DEBUG_AI
+    if not USE_AI:
+        return "[AI Disabled via --no-ai]"
     config_path = os.path.join(BASE_DIR, "agents", "utils", "api.config.json")
     try:
         with open(config_path) as f:
@@ -83,7 +89,10 @@ def call_openrouter(prompt, system=None):
             )
             data = r.json()
             if "error" in data:
-                last_err = f"[{m}] {data['error'].get('message', str(data['error']))}"
+                err = data["error"]
+                last_err = f"[{m}] {err.get('message', '')} | code: {err.get('code', '')} | type: {err.get('type', '')}"
+                if DEBUG_AI:
+                    print(f"  [AI Debug] Model {m} failed: {last_err}")
                 continue
             choice = data.get("choices", [{}])[0]
             msg = choice.get("message", {})
@@ -96,12 +105,16 @@ def call_openrouter(prompt, system=None):
                         fn = tc.get("function", {})
                         parts.append(f"{fn.get('name', '?')}({fn.get('arguments', '{}')})")
                     return "[Tool calls] " + ", ".join(parts)
-                return f"[AI raw: {json.dumps(data)[:500]}]"
+                if DEBUG_AI:
+                    print(f"  [AI Debug] No content: {json.dumps(data)[:500]}")
+                return "[AI Error: empty response]"
             return content
         except Exception as e:
             last_err = f"[{m}] {e}"
+            if DEBUG_AI:
+                print(f"  [AI Debug] Exception: {last_err}")
             continue
-    return f"[AI Error (all models failed): {last_err}]"
+    return f"[AI Error: {last_err}]"
 
 # ============ PHASE 1: RECON ============
 def phase1_recon():
@@ -380,11 +393,18 @@ Write a complete report in Arabic containing:
 
 # ============ MAIN ============
 def main():
-    global TARGET, PORT, DOMAIN, SHELL_OPENED
+    global TARGET, PORT, DOMAIN, SHELL_OPENED, USE_AI, DEBUG_AI
+
+    if "--no-ai" in sys.argv:
+        USE_AI = False
+        sys.argv.remove("--no-ai")
+    if "--debug" in sys.argv:
+        DEBUG_AI = True
+        sys.argv.remove("--debug")
 
     banner()
     if len(sys.argv) < 2:
-        print(f"  {YELLOW}Usage:{RESET} python3 kaligpt_tomcat_agent.py <target> [port]")
+        print(f"  {YELLOW}Usage:{RESET} python3 kaligpt_tomcat_agent.py <target> [port] [--no-ai] [--debug]")
         print(f"  {YELLOW}Example:{RESET} python3 kaligpt_tomcat_agent.py 192.168.1.100 8080")
         print(f"  {YELLOW}Example:{RESET} python3 kaligpt_tomcat_agent.py https://example.com")
         sys.exit(1)
