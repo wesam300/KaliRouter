@@ -60,7 +60,7 @@ def run(cmd, timeout=30, shell=True):
     except Exception as e:
         return f"[ERROR] {e}"
 
-def call_openrouter(prompt, system=None):
+def call_ai(prompt, system=None):
     global USE_AI, DEBUG_AI
     if not USE_AI:
         return "[AI Disabled via --no-ai]"
@@ -68,11 +68,14 @@ def call_openrouter(prompt, system=None):
     try:
         with open(config_path) as f:
             cfg = json.load(f)
-        api_key = cfg.get("openrouter", {}).get("api_key") or cfg.get("api_key", "")
-        model = cfg.get("openrouter", {}).get("default_model") or cfg.get("default_model", "poolside/laguna-xs-2.1:free")
+        prov = cfg.get("provider", {})
+        api_key = prov.get("api_key") or cfg.get("api_key", "")
+        model = prov.get("default_model") or prov.get("model", "poolside/laguna-xs-2.1:free")
+        base_url = prov.get("base_url", "https://openrouter.ai/api/v1").rstrip("/")
     except:
-        api_key = os.environ.get("OPENROUTER_API_KEY", "")
+        api_key = os.environ.get("AI_API_KEY", "")
         model = "poolside/laguna-xs-2.1:free"
+        base_url = "https://openrouter.ai/api/v1"
     if not api_key:
         return "[AI Disabled: No API key]"
     if not system:
@@ -82,7 +85,7 @@ def call_openrouter(prompt, system=None):
     for m in models_to_try:
         try:
             r = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
+                f"{base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json={"model": m, "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}]},
                 timeout=30
@@ -381,7 +384,7 @@ Write a complete report in Arabic containing:
 8. **الأدوات المستخدمة**: nmap, msfconsole, curl, إلخ
 """
 
-    report = call_openrouter(prompt)
+    report = call_ai(prompt)
 
     report_file = os.path.join(OUTPUT_DIR, "tomcat_final_report.md")
     with open(report_file, "w") as f:
