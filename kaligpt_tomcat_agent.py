@@ -79,9 +79,11 @@ def call_ai(prompt, system=None):
         base_url = "https://openrouter.ai/api/v1"
     if not api_key:
         return "[AI Disabled: No API key]"
+    if DEBUG_AI:
+        print(f"  [AI Debug] Using model={model} base_url={base_url}")
     if not system:
         system = "You are a Tomcat exploitation expert. Analyze and respond concisely in Arabic."
-    models_to_try = [model, "qwen/qwen3-coder:free", "meta-llama/llama-3.3-70b-instruct:free", "cognitivecomputations/dolphin-mistral-24b-venice-edition:free"]
+    models_to_try = [model]
     last_err = ""
     for m in models_to_try:
         try:
@@ -99,28 +101,22 @@ def call_ai(prompt, system=None):
                 else:
                     last_err = f"[{m}] {err}"
                 if DEBUG_AI:
-                    print(f"  [AI Debug] Model {m} failed: {last_err}")
+                    print(f"  [AI Debug] {last_err}")
                 continue
             choice = data.get("choices", [{}])[0]
             msg = choice.get("message", {})
             content = msg.get("content", "")
             if not content:
-                tool_calls = msg.get("tool_calls", [])
-                if tool_calls:
-                    parts = []
-                    for tc in tool_calls:
-                        fn = tc.get("function", {})
-                        parts.append(f"{fn.get('name', '?')}({fn.get('arguments', '{}')})")
-                    return "[Tool calls] " + ", ".join(parts)
                 if DEBUG_AI:
-                    print(f"  [AI Debug] No content: {json.dumps(data)[:500]}")
-                return "[AI Error: empty response]"
+                    print(f"  [AI Debug] No content: {json.dumps(data)[:200]}")
+                continue
             return content
         except Exception as e:
             last_err = f"[{m}] {e}"
             if DEBUG_AI:
                 print(f"  [AI Debug] Exception: {last_err}")
             continue
+    USE_AI = False
     return f"[AI Error: {last_err}]"
 
 # ============ PHASE 1: RECON ============
